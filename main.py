@@ -3,7 +3,7 @@ from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-BOT_USERNAME = "@Helloo_golu_bot"
+BOT_USERNAME = "@Hello_golu_bot"
 
 # PURE 300Q - 100 NORMAL BAAT ADDED - 1Q=1 REPLY
 custom_replies = {
