@@ -3,7 +3,7 @@ from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-BOT_USERNAME = "@Hello_golu_bot"
+BOT_USERNAME = "@Helloo_golu_bot"
 
 custom_replies = {
 "love you": "love you too",
