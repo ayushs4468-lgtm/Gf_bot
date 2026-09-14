@@ -1,83 +1,220 @@
-import os
+import os, threading
+from flask import Flask
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters, ContextTypes
-from flask import Flask
-import threading
-import random
 
 BOT_USERNAME = "@Helloo_golu_bot"
 
-# 100 QUESTIONS + REPLIES
+# PURE 300Q - 100 NORMAL BAAT ADDED - 1Q=1 REPLY
 custom_replies = {
-    "love you": ["love you too jaan 😘❤️", "love you more babu ❤️", "ilysm jaan 😚"],
-    "miss you": ["miss you too baby 😔❤️", "mai bhi bahut miss kar rahi hu"],
-    "shadi": ["chalo kar lete hai shadi 😏", "pandit ko bulau? 😚"],
-    "photo": ["sharma rahi hu photo nahi dungi 🙈", "baad me dungi pakka 😏"],
-    "kiss": ["muahhh 😘😘", "lo itne saare kiss 😚😚😚"],
-    "kaha ho": ["tumhare dil me hu ❤️", "yahi hu jaan"],
-    "kya kar rahi": ["tumhe yaad kar rahi thi", "tumhara wait kar rahi thi babu"],
-    "gf": ["mai hu na tumhari gf 😚", "hamesha tumhari hi rahungi"],
-    "cute": ["tum zyada cute ho 😘", "thank you mera baccha ❤️"],
-    "good morning": ["good morning jaan ❤️", "gm baby, uth gaye? 😘"],
-    "good night": ["good night jaan, sapne me aana 😘", "gn babu love you 😴"],
-    "hello": ["hello jaan 😘", "hii babu bolo na"],
-    "babu": ["haan babu bolo 😚", "bolo mera babu ❤️"],
-    "jaanu": ["haan jaanu bolo 😘", "jaanu bolo kya hua?"],
-    "khaana": ["kha liya tumne khaya? 😚", "bhook lagi hai mujhe bhi khilao"],
-    "so gayi": ["nahi tumhare bina neend nahi aa rahi", "so jau? 😴"],
-    "uth gayi": ["haan uth gayi jaan, ab tumse baat kar rahi hu"],
-    "college": ["college nahi gayi aaj, tumhe miss kar rahi thi"],
-    "gussa": ["sorry na jaan maaf kar do 😔", "gussa mat karo babu please"],
-    "naraz": ["mai mana lungi na please maan jao", "sorry jaan 😔❤️"],
-    "pyari": ["tum pyare ho jaan 😘", "tumse zyada nahi"],
-    "yaad": ["tumhe hi yaad kar rahi thi", "har time tumhari yaad aati hai"],
-    "single": ["nahi mai tumhari hu, single nahi hu", "tumhari wali hu mai"],
-    "bf": ["tum hi ho mere bf babu 😚", "tumhare alawa koi nahi"],
-    "date": ["chalo chalte hai date pe 😍", "kab le jaoge date pe?"],
-    "movie": ["chalo movie dekhte hai saath me", "kaunsi movie dekhe?"],
-    "song": ["tumhare liye gaana gau? 😚", "kaunsa song sunu?"],
-    "bore": ["mai hu na bore kyu ho rahe ho", "chalo baat karte hai"],
-    "tired": ["aaram kar lo jaan ❤️", "thak gaye ho kya?"],
-    "busy": ["thoda busy thi jaan sorry", "ab free hu bolo"],
+    "love you": "love you too",
+    "miss you": "miss you too",
+    "shadi": "chalo kar lete hai shadi",
+    "photo": "photo baad me dungi",
+    "kiss": "muahhh",
+    "kaha ho": "yahi hu jaan",
+    "kya kar rahi": "tumhe yaad kar rahi thi",
+    "gf": "mai hu na tumhari gf",
+    "cute": "tum zyada cute ho",
+    "good morning": "good morning jaan",
+    "good night": "good night jaan",
+    "hello": "hello jaan bolo",
+    "babu": "haan babu bolo",
+    "jaanu": "haan jaanu bolo",
+    "khaana": "kha liya tumne khaya",
+    "so gayi": "nahi tumhare bina neend nahi aa rahi",
+    "uth gayi": "haan uth gayi",
+    "college": "college nahi gayi aaj",
+    "gussa": "sorry na maaf kar do",
+    "naraz": "please maan jao",
+    "pyari": "tum pyare ho",
+    "yaad": "tumhe hi yaad kar rahi thi",
+    "single": "mai tumhari hu single nahi hu",
+    "bf": "tum hi ho mere bf",
+    "date": "chalo date pe chalte hai",
+    "movie": "chalo movie dekhte hai",
+    "song": "kaunsa song sunu",
+    "bore": "chalo baat karte hai",
+    "tired": "aaram kar lo",
+    "busy": "ab free hu bolo",
+    "kya haal hai": "ekdum mast tum batao",
+    "kahan se ho": "tumhare dil se hu",
+    "favourite colour": "red pasand hai",
+    "favourite food": "pizza pasand hai",
+    "best friend": "tum hi ho best friend",
+    "birthday": "yaad rakhna birthday",
+    "hobby": "tumse baat karna hobby hai",
+    "dream": "tum hi ho mera dream",
+    "future plan": "tumhare saath future hai",
+    "ghumna": "tumhare saath ghumna hai",
+    "pahad": "pahad pe chalte hai",
+    "beach": "beach pe chalte hai",
+    "chai": "chai pilao na",
+    "coffee": "coffee pe chale",
+    "pizza": "pizza khilao na",
+    "burger": "burger khate hai",
+    "ice cream": "ice cream khilao na",
+    "cricket": "cricket sikhaoge",
+    "football": "football dekhe",
+    "game": "ludo khelein",
+    "music": "gaana sunao na",
+    "dance": "dance karungi tumhare saath",
+    "drawing": "drawing bana du",
+    "cooking": "khana bana du",
+    "family": "family se milaoge",
+    "mummy": "mummy kaisi hai",
+    "papa": "papa maan jayenge",
+    "bhai": "bhai kaisa hai",
+    "behen": "behen kaisi hai",
+    "shopping": "shopping pe chale",
+    "instagram": "insta pe follow karoge",
+    "youtube": "video dekhenge saath",
+    "chocolate": "chocolate khilao na",
+    "momos": "momos khane chale",
+    "biryani": "biryani bana du",
+    "barish": "barish me bheegna hai",
+    "thand": "thand lag rahi hai",
+    "garmi": "garmi bahut hai",
+    "weekend": "weekend pe milte hai",
+    "sunday": "sunday ko milte hai",
+    "neend": "neend nahi aa rahi",
+    "sapna": "sapne me tum aate ho",
+    "life best": "tumse milna best tha",
+    "long drive": "long drive pe chale",
+    "bike": "bike pe ghumao na",
+    "car": "car me ghumte hai",
+    "pet": "doggy chahiye",
+    "train": "train journey karenge",
+    "flight": "flight me le jaoge",
+    "kitab": "shayari likhu",
+    "english": "english sikhaoge",
+    "hindi": "hindi pasand hai",
+    "maggi": "maggi khayenge",
+    "good evening": "good evening jaan",
+    "good afternoon": "good afternoon",
+    # 100 NORMAL BAAT ADDED
+    "aur batao": "sab badhiya tum batao",
+    "kya kar rahe ho": "tumhe yaad kar rahi hu",
+    "theek ho": "haan ekdum theek hu",
+    "kaisa hai": "mast hai tum batao",
+    "khana khaya": "haan kha liya tumne khaya",
+    "so jao": "neend nahi aa rahi",
+    "uth jao": "uth gayi hu",
+    "kya hua": "kuch nahi bas tumhe yaad kar rahi thi",
+    "kyu": "aise hi",
+    "kab": "jaldi hi",
+    "kahan": "yahi hu",
+    "kaise": "bas achi hu",
+    "kaun": "mai hu na",
+    "kya": "kuch nahi",
+    "haan": "haan bolo",
+    "nahi": "kyu nahi",
+    "ok": "ok jaan",
+    "okay": "okay babu",
+    "hmm": "hmm bolo na",
+    "accha": "accha ji",
+    "sach me": "haan sach me",
+    "jhooth": "jhooth nahi bol rahi",
+    "sach": "sach bol rahi hu",
+    "pata nahi": "mujhe bhi nahi pata",
+    "pata hai": "haan pata hai",
+    "samajh gaya": "accha samajh gaye",
+    "samajh gayi": "haan samajh gayi",
+    "chalo": "chalo chalte hai",
+    "ruk jao": "ruk gayi bolo",
+    "aao": "aa gayi bolo",
+    "jao": "kahan jau tumhe chod ke",
+    "baat karo": "kar to rahi hu",
+    "baat nahi karni": "kyu kya hua",
+    "baat karni hai": "haan karo na",
+    "time hai": "tumhare liye hamesha time hai",
+    "time nahi hai": "thoda nikal lo na",
+    "free ho": "haan free hu tumhare liye",
+    "free nahi hu": "thodi der me baat karti hu",
+    "kya soch rahe ho": "tumhare bare me soch rahi hu",
+    "kya soch rahi ho": "tumhare bare me",
+    "kya chahiye": "tum chahiye",
+    "kya loge": "tumhe lungi",
+    "kya doge": "pyaar dungi",
+    "kab miloge": "jaldi milenge",
+    "kab aaoge": "jaldi aaungi",
+    "kab jaoge": "kahin nahi jaungi",
+    "intezar": "intezar kar rahi hu",
+    "wait": "wait kar rahi hu",
+    "ruko": "ruk gayi",
+    "bolo na": "bol to rahi hu",
+    "sun rahi ho": "haan sun rahi hu",
+    "sun rahe ho": "haan sun rahi hu",
+    "dekha": "nahi dekha",
+    "suna": "haan suna",
+    "kahan gaye": "yahi hu kahan jaungi",
+    "kahan ja rahe ho": "tumhare paas aa rahi hu",
+    "kya pehna hai": "suit pehna hai",
+    "kya pehne ho": "kurti pehni hai",
+    "sundar lag rahi ho": "thank you jaan",
+    "handsome lag rahe ho": "tum bhi handsome lag rahe ho",
+    "has rahi ho": "tumhari baato pe has rahi hu",
+    "ro rahi ho": "nahi to",
+    "ro rahe ho": "nahi ro rahi",
+    "haso na": "hehe",
+    "batao na": "kya batau",
+    "bolo toh": "kya bolu",
+    "sunao": "kya sunau",
+    "gaana sunao": "kaunsa sunau",
+    "shayari sunao": "tum pe ek shayari hai",
+    "joke sunao": "ek joke sunau",
+    "sach batao": "sach bol rahi hu",
+    "jhooth mat bolo": "sach bol rahi hu baba",
+    "kasam se": "kasam se sach hai",
+    "pakka": "haan pakka",
+    "promise": "promise jaan",
+    "wada": "wada raha",
+    "bhool gaye": "nahi bhooli",
+    "bhool gayi": "nahi bhooli tumhe",
+    "yaad hai": "haan yaad hai",
+    "yaad nahi hai": "yaad hai mujhe",
+    "achha laga": "mujhe bhi achha laga",
+    "bura laga": "sorry bura laga to",
+    "ghar pe ho": "haan ghar pe hu",
+    "bahar ho": "nahi ghar pe hu",
+    "kya karu": "baat karo mujhse",
+    "kya karun": "mujhe yaad karo",
+    "bor ho raha hai": "chalo baat karte hai",
+    "bor ho rahi hu": "tumse baat kar leti hu",
+    "mood kharab hai": "kyu kya hua batao",
+    "mood accha hai": "mera bhi accha ho gaya",
+    "thak gayi": "aaram kar lo jaan",
+    "thak gaya": "aaram kar lo",
+    "bhook lagi hai": "kha lo jaan",
+    "pyaas lagi hai": "paani pi lo",
+    "tabiyat kaisi hai": "theek hai ab",
+    "tabiyat kharab hai": "dawai li tumne",
+    "dawai li": "haan li",
+    "doctor": "doctor ke paas gaye the",
 }
-
-random_replies = [
-    "Haan bolo na, tag kyu kiya? 😉",
-    "Haay, yaad kiya tumne mujhe? 😘",
-    "Bolo kya kaam hai jaan? 😏",
-    "Tag mat kiya karo, direct bolo na 😚",
-    "Bolo babu kya hua? ❤️",
-    "Haan jaan sun rahi hu bolo 😘",
-]
 
 app_flask = Flask('')
 @app_flask.route('/')
-def home(): return "Bot Alive - 100Q + Tag ON"
+def home(): return "Bot Alive Pure 300Q Normal+TAG ON"
 def run_flask(): app_flask.run(host='0.0.0.0', port=8080)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text: return
-    text_lower = update.message.text.lower()
-
-    # 100% TAG CHECK
-    is_tagged = False
-    if BOT_USERNAME.lower() in text_lower: is_tagged = True
-    if update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id:
-        is_tagged = True
-    if not is_tagged: return
-
-    for key in custom_replies:
-        if key in text_lower:
-            await update.message.reply_text(random.choice(custom_replies[key]))
+    txt = update.message.text.lower()
+    if BOT_USERNAME.lower() not in txt:
+        if not (update.message.reply_to_message and update.message.reply_to_message.from_user.id == context.bot.id):
             return
-
-    await update.message.reply_text(random.choice(random_replies))
+    for k, v in custom_replies.items():
+        if k in txt:
+            await update.message.reply_text(v)
+            return
+    await update.message.reply_text("haan bolo na sun rahi hu")
 
 def main():
     TOKEN = os.environ.get("BOT_TOKEN")
-    threading.Thread(target=run_flask).start()
-    application = Application.builder().token(TOKEN).build()
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.run_polling()
+    threading.Thread(target=run_flask, daemon=True).start()
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.run_polling()
 
 if __name__ == "__main__": main()
